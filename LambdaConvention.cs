@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Fixie;
 using System.Linq;
+using Shouldly;
 
 namespace LearnLinq
 {
@@ -12,6 +13,10 @@ namespace LearnLinq
         {
             Classes.Where(@class => @class.IsVisible);
             Parameters.Add<FromMarkedFunctions>();
+
+            HideExceptionDetails
+                .For(typeof(ShouldBeTestExtensions).Assembly.GetType("Shouldly.ShouldlyCoreExtensions"))
+                .For(typeof(ShouldBeTestExtensions));
         }
     }
 
@@ -23,27 +28,15 @@ namespace LearnLinq
             {
                 var testType = method.DeclaringType.GetTypeInfo();
 
-                var ms = testType.DeclaredMethods;
-                foreach (var m in ms)
-                {
-                    var del = Delegate.CreateDelegate(method.GetParameters().First().ParameterType, m, false);
-                    Console.WriteLine(del);
-                }
-
                 var methods = from m in testType.DeclaredMethods
                               let del = Delegate.CreateDelegate(method.GetParameters().First().ParameterType, m, false)
                               where del != null
                               select new object[] { del };
 
-                foreach (var del in methods)
-                {
-                    yield return del;
-                }
+                return methods;
             }
-            else
-            {
-                yield return new object[] { 2 };
-            }
+
+            return Enumerable.Empty<object[]>();
         }
     }
 }
